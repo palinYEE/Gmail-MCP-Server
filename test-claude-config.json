@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gmail-local": {
+      "command": "node",
+      "args": [
+        "/Users/andy/Desktop/NexA/Gmail-MCP-Server/dist/index.js",
+        "YOUR_ACCESS_TOKEN_HERE"
+      ]
+    }
+  }
+}

@@ -1,6 +1,6 @@
-# Gmail AutoAuth MCP Server
+# Gmail MCP Server with Access Token
 
-A Model Context Protocol (MCP) server for Gmail integration in Claude Desktop with auto authentication support. This server enables AI assistants to manage Gmail through natural language interactions.
+A Model Context Protocol (MCP) server for Gmail integration in Claude Desktop using direct access token authentication. This server enables AI assistants to manage Gmail through natural language interactions.
 
 ![](https://badge.mcpx.dev?type=server 'MCP Server')
 [![smithery badge](https://smithery.ai/badge/@gongrzhe/server-gmail-autoauth-mcp)](https://smithery.ai/server/@gongrzhe/server-gmail-autoauth-mcp)
@@ -24,70 +24,62 @@ A Model Context Protocol (MCP) server for Gmail integration in Claude Desktop wi
 - Delete emails
 - **Batch operations for efficiently processing multiple emails at once**
 - Full integration with Gmail API
-- Simple OAuth2 authentication flow with auto browser launch
-- Support for both Desktop and Web application credentials
-- Global credential storage for convenience
+- Direct access token authentication - no OAuth flow needed
+- Simple configuration via command-line argument or environment variable
 
 ## Installation & Authentication
 
-### Installing via Smithery
+### Getting a Gmail Access Token
 
-To install Gmail AutoAuth for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@gongrzhe/server-gmail-autoauth-mcp):
+To use this server, you need a Gmail access token with appropriate scopes. Here's how to obtain one:
 
+1. **Using Google OAuth Playground (Easiest for Testing)**:
+   - Go to [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/)
+   - In Step 1, select the following scopes:
+     - `https://www.googleapis.com/auth/gmail.modify`
+     - `https://www.googleapis.com/auth/gmail.settings.basic`
+   - Click "Authorize APIs" and sign in with your Google account
+   - In Step 2, click "Exchange authorization code for tokens"
+   - Copy the "Access token" from the response
+
+2. **Using Google Cloud Console (For Production)**:
+   - Create a project in [Google Cloud Console](https://console.cloud.google.com/)
+   - Enable the Gmail API
+   - Create OAuth 2.0 credentials
+   - Use your preferred OAuth flow to obtain an access token with the required scopes
+
+### Running the Server
+
+You can provide the access token in two ways:
+
+#### Option 1: Command-line argument
 ```bash
-npx -y @smithery/cli install @gongrzhe/server-gmail-autoauth-mcp --client claude
+npx @gongrzhe/server-gmail-autoauth-mcp YOUR_ACCESS_TOKEN_HERE
 ```
 
-### Installing Manually
-1. Create a Google Cloud Project and obtain credentials:
+#### Option 2: Environment variable
+```bash
+export GMAIL_ACCESS_TOKEN=YOUR_ACCESS_TOKEN_HERE
+npx @gongrzhe/server-gmail-autoauth-mcp
+```
 
-   a. Create a Google Cloud Project:
-      - Go to [Google Cloud Console](https://console.cloud.google.com/)
-      - Create a new project or select an existing one
-      - Enable the Gmail API for your project
+### Configure in Claude Desktop
 
-   b. Create OAuth 2.0 Credentials:
-      - Go to "APIs & Services" > "Credentials"
-      - Click "Create Credentials" > "OAuth client ID"
-      - Choose either "Desktop app" or "Web application" as application type
-      - Give it a name and click "Create"
-      - For Web application, add `http://localhost:3000/oauth2callback` to the authorized redirect URIs
-      - Download the JSON file of your client's OAuth keys
-      - Rename the key file to `gcp-oauth.keys.json`
+```json
+{
+  "mcpServers": {
+    "gmail": {
+      "command": "npx",
+      "args": [
+        "@gongrzhe/server-gmail-autoauth-mcp",
+        "YOUR_ACCESS_TOKEN_HERE"
+      ]
+    }
+  }
+}
+```
 
-2. Run Authentication:
-
-   You can authenticate in two ways:
-
-   a. Global Authentication (Recommended):
-   ```bash
-   # First time: Place gcp-oauth.keys.json in your home directory's .gmail-mcp folder
-   mkdir -p ~/.gmail-mcp
-   mv gcp-oauth.keys.json ~/.gmail-mcp/
-
-   # Run authentication from anywhere
-   npx @gongrzhe/server-gmail-autoauth-mcp auth
-   ```
-
-   b. Local Authentication:
-   ```bash
-   # Place gcp-oauth.keys.json in your current directory
-   # The file will be automatically copied to global config
-   npx @gongrzhe/server-gmail-autoauth-mcp auth
-   ```
-
-   The authentication process will:
-   - Look for `gcp-oauth.keys.json` in the current directory or `~/.gmail-mcp/`
-   - If found in current directory, copy it to `~/.gmail-mcp/`
-   - Open your default browser for Google authentication
-   - Save credentials as `~/.gmail-mcp/credentials.json`
-
-   > **Note**: 
-   > - After successful authentication, credentials are stored globally in `~/.gmail-mcp/` and can be used from any directory
-   > - Both Desktop app and Web application credentials are supported
-   > - For Web application credentials, make sure to add `http://localhost:3000/oauth2callback` to your authorized redirect URIs
-
-3. Configure in Claude Desktop:
+Or with environment variable:
 
 ```json
 {
@@ -96,7 +88,10 @@ npx -y @smithery/cli install @gongrzhe/server-gmail-autoauth-mcp --client claude
       "command": "npx",
       "args": [
         "@gongrzhe/server-gmail-autoauth-mcp"
-      ]
+      ],
+      "env": {
+        "GMAIL_ACCESS_TOKEN": "YOUR_ACCESS_TOKEN_HERE"
+      }
     }
   }
 }
@@ -106,18 +101,6 @@ npx -y @smithery/cli install @gongrzhe/server-gmail-autoauth-mcp --client claude
 
 If you prefer using Docker:
 
-1. Authentication:
-```bash
-docker run -i --rm \
-  --mount type=bind,source=/path/to/gcp-oauth.keys.json,target=/gcp-oauth.keys.json \
-  -v mcp-gmail:/gmail-server \
-  -e GMAIL_OAUTH_PATH=/gcp-oauth.keys.json \
-  -e "GMAIL_CREDENTIALS_PATH=/gmail-server/credentials.json" \
-  -p 3000:3000 \
-  mcp/gmail auth
-```
-
-2. Usage:
 ```json
 {
   "mcpServers": {
@@ -127,57 +110,14 @@ docker run -i --rm \
         "run",
         "-i",
         "--rm",
-        "-v",
-        "mcp-gmail:/gmail-server",
         "-e",
-        "GMAIL_CREDENTIALS_PATH=/gmail-server/credentials.json",
+        "GMAIL_ACCESS_TOKEN=YOUR_ACCESS_TOKEN_HERE",
         "mcp/gmail"
       ]
     }
   }
 }
 ```
-
-### Cloud Server Authentication
-
-For cloud server environments (like n8n), you can specify a custom callback URL during authentication:
-
-```bash
-npx @gongrzhe/server-gmail-autoauth-mcp auth https://gmail.gongrzhe.com/oauth2callback
-```
-
-#### Setup Instructions for Cloud Environment
-
-1. **Configure Reverse Proxy:**
-   - Set up your n8n container to expose a port for authentication
-   - Configure a reverse proxy to forward traffic from your domain (e.g., `gmail.gongrzhe.com`) to this port
-
-2. **DNS Configuration:**
-   - Add an A record in your DNS settings to resolve your domain to your cloud server's IP address
-
-3. **Google Cloud Platform Setup:**
-   - In your Google Cloud Console, add your custom domain callback URL (e.g., `https://gmail.gongrzhe.com/oauth2callback`) to the authorized redirect URIs list
-
-4. **Run Authentication:**
-   ```bash
-   npx @gongrzhe/server-gmail-autoauth-mcp auth https://gmail.gongrzhe.com/oauth2callback
-   ```
-
-5. **Configure in your application:**
-   ```json
-   {
-     "mcpServers": {
-       "gmail": {
-         "command": "npx",
-         "args": [
-           "@gongrzhe/server-gmail-autoauth-mcp"
-         ]
-       }
-     }
-   }
-   ```
-
-This approach allows authentication flows to work properly in environments where localhost isn't accessible, such as containerized applications or cloud servers.
 
 ## Available Tools
 
@@ -691,26 +631,27 @@ The server includes efficient batch processing capabilities:
 
 ## Security Notes
 
-- OAuth credentials are stored securely in your local environment (`~/.gmail-mcp/`)
-- The server uses offline access to maintain persistent authentication
-- Never share or commit your credentials to version control
-- Regularly review and revoke unused access in your Google Account settings
-- Credentials are stored globally but are only accessible by the current user
+- **Never share or commit your access token to version control**
+- Access tokens expire periodically - you'll need to obtain a new one when it expires
+- Only grant the minimum required scopes for your use case
+- Regularly review and revoke unused tokens in your Google Account settings
 - **Attachment files are processed locally and never stored permanently by the server**
+- Consider using refresh tokens for long-running applications
 
 ## Troubleshooting
 
-1. **OAuth Keys Not Found**
-   - Make sure `gcp-oauth.keys.json` is in either your current directory or `~/.gmail-mcp/`
-   - Check file permissions
+1. **Access Token Not Provided**
+   - Ensure you're providing the access token as a command-line argument or environment variable
+   - Check that the token is properly formatted (no extra spaces or quotes)
 
-2. **Invalid Credentials Format**
-   - Ensure your OAuth keys file contains either `web` or `installed` credentials
-   - For web applications, verify the redirect URI is correctly configured
+2. **Authentication Failed / 401 Errors**
+   - Your access token may have expired - obtain a new one
+   - Verify the token has the required Gmail scopes
+   - Check that you're using the correct Google account
 
-3. **Port Already in Use**
-   - If port 3000 is already in use, please free it up before running authentication
-   - You can find and stop the process using that port
+3. **403 Forbidden Errors**
+   - Ensure the Gmail API is enabled in your Google Cloud project
+   - Verify your token has the necessary scopes (`gmail.modify` and `gmail.settings.basic`)
 
 4. **Batch Operation Failures**
    - If batch operations fail, they automatically retry individual items
