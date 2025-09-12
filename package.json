@@ -1,11 +1,11 @@
 {
-  "name": "@gongrzhe/server-gmail-autoauth-mcp",
-  "version": "1.1.11",
-  "description": "Gmail MCP server with direct access token authentication",
+  "name": "@palinyee/gmail-mcp-server",
+  "version": "1.0.0",
+  "description": "Gmail MCP 서버 - Claude Desktop에서 Gmail을 직접 관리",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "gmail-mcp": "./dist/index.js"
+    "gmail-mcp-server": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -28,16 +28,16 @@
     "claude",
     "auto-auth"
   ],
-  "author": "gongrzhe",
-  "license": "ISC",
+  "author": "palinYEE",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gongrzhe/server-gmail-autoauth-mcp.git"
+    "url": "git+https://github.com/palinYEE/Gmail-MCP-Server.git"
   },
   "bugs": {
-    "url": "https://github.com/gongrzhe/server-gmail-autoauth-mcp/issues"
+    "url": "https://github.com/palinYEE/Gmail-MCP-Server/issues"
   },
-  "homepage": "https://github.com/gongrzhe/server-gmail-autoauth-mcp#readme",
+  "homepage": "https://github.com/palinYEE/Gmail-MCP-Server#readme",
   "publishConfig": {
     "access": "public"
   },
